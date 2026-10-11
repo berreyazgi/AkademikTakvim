@@ -1,0 +1,2992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEDÜ 2026 Güz — Akademik Takvim & Çalışma Takip Sistemi</title>
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js for Study Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            tedu: {
+              navy: '#0f172a',
+              blue: '#2563eb',
+              gold: '#f59e0b',
+              emerald: '#10b981',
+              purple: '#7c3aed',
+              cyan: '#0891b2',
+              rose: '#e11d48'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Smooth Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .dark ::-webkit-scrollbar-track { background: #0f172a; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* Timetable Grid Styles */
+    .timetable-grid-desktop {
+      display: grid;
+      grid-template-columns: 80px repeat(7, minmax(145px, 1fr));
+    }
+    
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .dark .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- ==========================================
+       HEADER & NAVIGATION BAR
+       ========================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Branding -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-indigo-600 to-purple-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-base md:text-lg tracking-tight text-slate-900 dark:text-white">TEDÜ 2026 Güz</span>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                Güz Yarıyılı
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">Akademik Takvim, Ders Programı & Çalışma Takip Sistemi</p>
+          </div>
+        </div>
+
+        <!-- Global Action Bar: Active Timer, Data Management, Theme Toggle -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Live Timer Badge (Visible across tabs when active) -->
+          <div id="globalTimerBadge" onclick="switchTab('study-tracker')" title="Sayaç Sekmesine Git" class="hidden cursor-pointer items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition">
+            <i class="fa-solid fa-stopwatch animate-spin text-amber-500" style="animation-duration: 3s;"></i>
+            <span id="globalTimerText">25:00</span>
+          </div>
+
+          <!-- JSON Sync / Backup Modal Trigger -->
+          <button onclick="openSyncModal()" title="Veri Yönetimi & Yedekleme (JSON / Cloud)" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/40 dark:hover:text-blue-400 transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-700">
+            <i class="fa-solid fa-cloud-arrow-up text-blue-500"></i>
+            <span class="hidden md:inline">Veri / Yedek</span>
+          </button>
+
+          <!-- Theme Toggle Button -->
+          <button id="themeToggleBtn" title="Koyu / Açık Mod" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200 dark:border-slate-700">
+            <i class="fa-solid fa-moon dark:hidden"></i>
+            <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Navigation Menu -->
+      <nav class="flex space-x-1 sm:space-x-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto py-1.5 custom-scroll text-xs sm:text-sm font-semibold" aria-label="Tabs">
+        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn active px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 font-bold">
+          <i class="fa-solid fa-chart-pie"></i> <span>Genel Bakış</span>
+        </button>
+        <button onclick="switchTab('timetable')" id="tab-timetable" class="tab-btn px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <i class="fa-solid fa-calendar-week"></i> <span>Haftalık Program</span>
+        </button>
+        <button onclick="switchTab('study-plan')" id="tab-study-plan" class="tab-btn px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <i class="fa-solid fa-list-check"></i> <span>Çalışma Görevleri</span>
+        </button>
+        <button onclick="switchTab('study-tracker')" id="tab-study-tracker" class="tab-btn px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <i class="fa-solid fa-stopwatch-20"></i> <span>Odak Sayacı & Günlük</span>
+        </button>
+        <button onclick="switchTab('deadlines')" id="tab-deadlines" class="tab-btn px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <i class="fa-solid fa-bell"></i> <span>Sınavlar & Teslimler</span>
+        </button>
+        <button onclick="switchTab('grade-calc')" id="tab-grade-calc" class="tab-btn px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+          <i class="fa-solid fa-calculator"></i> <span>Not & GPA Simülatörü</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN CONTAINER
+       ========================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+    <!-- ============================================================
+         1. SEKME: GENEL BAKIŞ (DASHBOARD)
+         ============================================================ -->
+    <div id="view-dashboard" class="space-y-6">
+      
+      <!-- Welcome Hero Banner -->
+      <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white p-6 sm:p-8 shadow-xl relative overflow-hidden border border-slate-800">
+        <div class="absolute -right-12 -bottom-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-300 uppercase tracking-wider mb-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              2026-2027 Güz Yarıyılı • TEDÜ Akademik Portal
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white">Akademik Başarı & Odaklanma Paneli</h2>
+            <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              Haftalık ders programınızı yönetin, Pomodoro odak oturumlarını kaydedin, teslim geri sayımlarını izleyin ve GPA hedeflerinizi simüle edin.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="switchTab('study-tracker')" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/30 transition flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Sayaçla Çalış
+            </button>
+            <button onclick="switchTab('timetable')" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold border border-slate-700 transition flex items-center gap-2">
+              <i class="fa-regular fa-calendar"></i> Haftalık Program
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Toplam Çalışma -->
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-fire"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Toplam Odak</div>
+            <div id="statTotalMinutes" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">0 saat</div>
+            <div id="statLogCount" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">0 oturum</div>
+          </div>
+        </div>
+
+        <!-- En Yakın Teslim -->
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+          <div class="overflow-hidden">
+            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">En Yakın Teslim</div>
+            <div id="statNextDeadline" class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate max-w-[140px]">-</div>
+            <div id="statDaysLeft" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">-</div>
+          </div>
+        </div>
+
+        <!-- Görev İlerlemesi -->
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Haftalık Görevler</div>
+            <div id="statTaskProgress" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">0%</div>
+            <div id="statTaskRatio" class="text-[10px] text-slate-500">0 / 0 tamamlandı</div>
+          </div>
+        </div>
+
+        <!-- GPA Tahmini -->
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-award"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">Tahmini GPA</div>
+            <div id="statGPA" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">0.00</div>
+            <div id="statTotalECTS" class="text-[10px] text-purple-600 dark:text-purple-400 font-semibold">27 AKTS Yükü</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Split: Today's Classes & Analytics Doughnut -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Sol: Bugünün Canlı Ders Programı -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-calendar-day text-blue-600"></i>
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">Günün Ders Programı</h3>
+              </div>
+              <span id="currentDayBadge" class="text-xs font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-700 dark:text-slate-300">
+                Pazartesi
+              </span>
+            </div>
+            
+            <div id="todayClassesContainer" class="mt-4 space-y-3">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500">
+            <span>Derslik ve saatler canlı takvimden beslenir</span>
+            <button onclick="switchTab('timetable')" class="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+              Tüm Haftayı Gör →
+            </button>
+          </div>
+        </div>
+
+        <!-- Sağ: Derslere Göre Çalışma Dağılımı (Chart.js) -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-emerald-600"></i>
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">Ders Odaklanma Dağılımı</h3>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">Çalışma Günlüğü</span>
+            </div>
+            
+            <div class="mt-4 h-60 relative flex items-center justify-center">
+              <canvas id="studyDistributionChart"></canvas>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500">
+            <span>En çok çalışılan: <strong id="topStudiedCourse" class="text-slate-800 dark:text-slate-200">-</strong></span>
+            <button onclick="switchTab('study-tracker')" class="text-blue-600 dark:text-blue-400 hover:underline font-bold">
+              Yeni Çalışma Ekle →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         2. SEKME: HAFTALIK DERS PROGRAMI (VISUAL TIMETABLE)
+         ============================================================ -->
+    <div id="view-timetable" class="hidden space-y-6">
+      
+      <!-- Timetable Header & Action Bar -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Haftalık Ders Çizelgesi (08:00 - 22:00)</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Pazartesi - Pazar tüm haftayı kapsayan, düzenlenebilir ve silinebilir ders blokları.</p>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button onclick="openCourseModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-2 shadow-sm whitespace-nowrap">
+            <i class="fa-solid fa-plus"></i> Yeni Ders / Blok Ekle
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Legend Badges -->
+      <div id="timetableLegend" class="flex flex-wrap gap-2 text-xs">
+        <!-- Rendered dynamically from current courses -->
+      </div>
+
+      <!-- Mobile Day Filter Tabs (Visible on small screens) -->
+      <div class="lg:hidden flex space-x-1 overflow-x-auto pb-2 custom-scroll" id="mobileDayTabs">
+        <!-- Mon-Sun tab buttons rendered dynamically -->
+      </div>
+
+      <!-- Mobile Timetable View (Cards for selected day) -->
+      <div id="mobileTimetableContainer" class="lg:hidden space-y-3">
+        <!-- Mobile cards rendered dynamically -->
+      </div>
+
+      <!-- Desktop Timetable Grid (08:00 - 22:00, Mon - Sun) -->
+      <div class="hidden lg:block bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto custom-scroll">
+        <div class="min-w-[1050px]">
+          
+          <!-- Grid Header -->
+          <div class="timetable-grid-desktop bg-slate-900 text-white font-bold text-xs uppercase tracking-wider py-3.5 border-b border-slate-800">
+            <div class="text-center font-mono text-slate-400">Saat</div>
+            <div class="text-center">Pazartesi</div>
+            <div class="text-center">Salı</div>
+            <div class="text-center">Çarşamba</div>
+            <div class="text-center">Perşembe</div>
+            <div class="text-center">Cuma</div>
+            <div class="text-center text-indigo-300">Cumartesi</div>
+            <div class="text-center text-indigo-300">Pazar</div>
+          </div>
+
+          <!-- Hourly Rows Container (08:00 to 22:00) -->
+          <div id="timetableRowsContainer" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            <!-- Dynamically populated via JS -->
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         3. SEKME: ÇALIŞMA PLANI (STUDY TASK PLANNER & FOCUS CHECKLIST)
+         ============================================================ -->
+    <div id="view-study-plan" class="hidden space-y-6">
+      
+      <!-- Header & Filter Bar -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-emerald-600 text-lg"></i>
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Haftalık Çalışma Planı & Görev Çizelgesi</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Ödevler, problem setleri, quiz tekrarları ve sprint deliverables takibi.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <!-- Day Filter -->
+          <select id="taskDayFilter" onchange="renderStudyTasks()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none">
+            <option value="ALL">Tüm Günler</option>
+            <option value="Pazartesi">Pazartesi</option>
+            <option value="Salı">Salı</option>
+            <option value="Çarşamba">Çarşamba</option>
+            <option value="Perşembe">Perşembe</option>
+            <option value="Cuma">Cuma</option>
+            <option value="Cumartesi">Cumartesi</option>
+            <option value="Pazar">Pazar</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="taskStatusFilter" onchange="renderStudyTasks()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none">
+            <option value="ALL">Tüm Durumlar</option>
+            <option value="planned">Planlandı</option>
+            <option value="in_progress">Devam Ediyor</option>
+            <option value="done">Tamamlandı</option>
+          </select>
+
+          <!-- Add Task Button -->
+          <button onclick="openTaskModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+            <i class="fa-solid fa-plus"></i> Yeni Görev
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Progress Bar -->
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Haftalık Çalışma Tamamlama Oranı</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500" id="planRatioBadge">0 / 0</span>
+          </div>
+          <span id="planPercentText" class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">0%</span>
+        </div>
+        <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div id="planProgressBar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Task Cards Grid -->
+      <div id="studyTaskListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         4. SEKME: SAYAÇ & ÇALIŞMA GÜNLÜĞÜ (FOCUS TIMER & LOGGER)
+         ============================================================ -->
+    <div id="view-study-tracker" class="hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Live Pomodoro & Stopwatch Box -->
+        <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between relative overflow-hidden border border-slate-800">
+          <div class="absolute -top-12 -right-12 w-48 h-48 bg-blue-600/10 rounded-full blur-2xl"></div>
+
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-stopwatch text-blue-400"></i> Odak Sayacı
+              </span>
+              <!-- Sound Toggle -->
+              <button id="timerSoundToggle" onclick="toggleTimerSound()" title="Sesli Bildirim" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1">
+                <i id="timerSoundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                <span class="text-[10px]">Ses Açık</span>
+              </button>
+            </div>
+
+            <!-- Mode Selector Chips -->
+            <div class="flex flex-wrap gap-1.5 mt-4">
+              <button onclick="setTimerPreset('pomodoro', 25)" id="preset-pomo" class="preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white transition">
+                Pomodoro (25dk)
+              </button>
+              <button onclick="setTimerPreset('short_break', 5)" id="preset-sbreak" class="preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+                Kısa Mola (5dk)
+              </button>
+              <button onclick="setTimerPreset('long_break', 15)" id="preset-lbreak" class="preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+                Uzun Mola (15dk)
+              </button>
+              <button onclick="setTimerPreset('stopwatch', 0)" id="preset-stopwatch" class="preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+                Kronometre
+              </button>
+            </div>
+
+            <!-- Active Course Indicator -->
+            <div class="mt-4 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs flex items-center justify-between">
+              <span class="text-slate-400 text-[11px]">Hedef Ders:</span>
+              <span id="timerTargetCourse" class="font-bold text-blue-400">MATH 240</span>
+            </div>
+
+            <!-- Huge Timer Display -->
+            <div class="my-6 text-center">
+              <div id="timerDisplay" class="font-mono text-5xl sm:text-6xl font-black tracking-tight text-white drop-shadow">
+                25:00
+              </div>
+              <p id="timerStatusLabel" class="text-xs text-slate-400 mt-2 font-medium">Hazır • Başlatmak için dokunun</p>
+            </div>
+
+            <!-- Timer Action Buttons -->
+            <div class="flex items-center justify-center gap-3">
+              <button id="timerToggleBtn" onclick="toggleTimer()" class="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold text-sm shadow-lg shadow-blue-600/30 transition flex items-center gap-2">
+                <i id="timerToggleIcon" class="fa-solid fa-play"></i>
+                <span id="timerToggleText">Başlat</span>
+              </button>
+              <button onclick="resetTimer()" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Sıfırla">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+              <button onclick="triggerTimerComplete()" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition" title="Oturumu Bitir & Kaydet">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between items-center">
+            <span>Oturum bitiminde süre otomatik forma yazılır</span>
+            <span class="text-emerald-400 font-mono font-bold" id="timerGoalLabel">Hedef: 25 Dk</span>
+          </div>
+        </div>
+
+        <!-- Log Study Session Form (With Planned vs Actual & Mistake Retrospective) -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-blue-600"></i> Çalışma Oturumu Kaydet
+              </h3>
+              <p class="text-xs text-slate-500">Öğrenilen kavramlar, zorluklar ve retrospektif notlar.</p>
+            </div>
+            <span class="text-[11px] font-mono px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              Excel Formatı
+            </span>
+          </div>
+
+          <form id="studyLogForm" onsubmit="handleLogSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Course Selection -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders Seçimi</label>
+                <select id="logCourse" onchange="syncTimerTargetCourse()" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <!-- Populated from courses -->
+                </select>
+              </div>
+
+              <!-- Planned Duration -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Planlanan Süre (Dk)</label>
+                <input type="number" id="logPlannedDuration" min="1" max="600" value="25" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <!-- Actual Duration -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Gerçekleşen Süre (Dk)</label>
+                <input type="number" id="logActualDuration" min="1" max="600" value="25" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-600 dark:text-blue-400">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Topic / Task -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">İşlenen Konu / Çözülen Problem</label>
+                <input type="text" id="logTopic" placeholder="Örn: Bayes Kuralı ve Koşullu Olasılık Soru Çözümü" required class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <!-- Focus Rating -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Odaklanma Puanı (1 - 5 Yıldız)</label>
+                <select id="logRating" class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="5">⭐⭐⭐⭐⭐ 5/5 — Kesintisiz Yüksek Odak</option>
+                  <option value="4" selected>⭐⭐⭐⭐ 4/5 — İyi ve Verimli</option>
+                  <option value="3">⭐⭐⭐ 3/5 — Orta / Birkaç Kesinti</option>
+                  <option value="2">⭐⭐ 2/5 — Düşük / Dikkat Dağıldı</option>
+                  <option value="1">⭐ 1/5 — Çok Düşük Odak</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Retrospective & Mistake Notes -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Retrospektif & Zorluk Günlüğü ("Ne öğrendim / nerede takıldım?")</label>
+              <textarea id="logNotes" rows="2" placeholder="Örn: 3. soruda formülü karıştırdım, çarşamba günü lab hocasına sorulacak." class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white font-bold text-xs transition shadow-md flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Günlüğe Ekle & Kaydet
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Study Session History Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-slate-600"></i> Çalışma Oturumu Geçmişi
+            </h3>
+            <p class="text-xs text-slate-500">Tarayıcınızın yerel belleğinde saklanan kayıtlar.</p>
+          </div>
+          <button onclick="clearStudyLogs()" class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-semibold">
+            Tüm Kayıtları Temizle
+          </button>
+        </div>
+
+        <div class="overflow-x-auto mt-4 custom-scroll">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800 pb-2">
+                <th class="p-2.5">Tarih</th>
+                <th class="p-2.5">Ders</th>
+                <th class="p-2.5">Konu / Problem</th>
+                <th class="p-2.5 text-center">Plan / Gerçek</th>
+                <th class="p-2.5 text-center">Odak</th>
+                <th class="p-2.5">Retrospektif & Notlar</th>
+                <th class="p-2.5 text-right">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="studyLogTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Populated dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         5. SEKME: SINAVLAR & TESLİMLER (DEADLINES & MILESTONES)
+         ============================================================ -->
+    <div id="view-deadlines" class="hidden space-y-6">
+      
+      <!-- Deadlines Header & Controls -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-flag-checkered text-rose-600 text-lg"></i>
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Sınavlar, Teslimler & Akademik Geri Sayım</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Syllabus sınavları, quizler, proje raporları ve ödev teslimleri.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <!-- Course Filter -->
+          <select id="deadlineCourseFilter" onchange="renderDeadlines()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none">
+            <option value="ALL">Tüm Dersler</option>
+            <!-- Populated via JS -->
+          </select>
+
+          <!-- Priority Filter -->
+          <select id="deadlinePriorityFilter" onchange="renderDeadlines()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none">
+            <option value="ALL">Tüm Öncelikler</option>
+            <option value="critical">Kritik</option>
+            <option value="high">Yüksek</option>
+            <option value="medium">Orta</option>
+            <option value="low">Düşük</option>
+          </select>
+
+          <!-- Add Milestone Button -->
+          <button onclick="openDeadlineModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+            <i class="fa-solid fa-plus"></i> Yeni Teslim / Sınav
+          </button>
+        </div>
+      </div>
+
+      <!-- Deadlines Grid Cards -->
+      <div id="deadlinesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         6. SEKME: NOT VE GPA SİMÜLATÖRÜ (GRADE & WEIGHT SIMULATOR)
+         ============================================================ -->
+    <div id="view-grade-calc" class="hidden space-y-6">
+      
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-indigo-600 text-lg"></i>
+            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Dönem Not Takibi & GPA Tahmincisi</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Derslerinizin AKTS ağırlıklarına ve syllabus bileşenlerine göre dönem sonu not ortalamanızı simüle edin.</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400 font-medium">Dönem GPA Tahmini</div>
+            <div id="calculatedGPADisplay" class="text-3xl font-black text-indigo-600 dark:text-indigo-400">0.00</div>
+          </div>
+          <button onclick="openAddGradeCourseModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+            <i class="fa-solid fa-plus"></i> Ders Ekle
+          </button>
+        </div>
+      </div>
+
+      <!-- Courses Grade Simulation Table -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto custom-scroll">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <th class="p-3.5">Ders Kodu & Adı</th>
+                <th class="p-3.5 text-center">AKTS</th>
+                <th class="p-3.5 text-center">Vize (%35)</th>
+                <th class="p-3.5 text-center">Ödev/Quiz (%25)</th>
+                <th class="p-3.5 text-center">Hedef Final (%40)</th>
+                <th class="p-3.5 text-center">Harf Notu</th>
+                <th class="p-3.5 text-center">Katsayı (0-4)</th>
+                <th class="p-3.5 text-right">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="gradeTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Grading System Scale Legend -->
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
+        <span>Not Katsayıları: <strong>AA:</strong> 4.0 | <strong>BA:</strong> 3.5 | <strong>BB:</strong> 3.0 | <strong>CB:</strong> 2.5 | <strong>CC:</strong> 2.0 | <strong>DC:</strong> 1.5 | <strong>DD:</strong> 1.0 | <strong>FF:</strong> 0.0</span>
+        <button onclick="resetGradesToDefault()" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Varsayılan Notları Geri Yükle</button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- 1. COURSE (TIMETABLE BLOCK) MODAL -->
+  <div id="courseModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 id="courseModalTitle" class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-calendar-plus text-blue-600"></i> Yeni Ders Bloğu Ekle
+        </h3>
+        <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCourseSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="courseEditId" value="">
+        
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders Kodu (Örn: MATH 240)</label>
+          <input type="text" id="courseCode" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders Başlığı (Örn: Probability & Statistics)</label>
+          <input type="text" id="courseTitle" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Gün</label>
+            <select id="courseDay" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="Pazartesi">Pazartesi</option>
+              <option value="Salı">Salı</option>
+              <option value="Çarşamba">Çarşamba</option>
+              <option value="Perşembe">Perşembe</option>
+              <option value="Cuma">Cuma</option>
+              <option value="Cumartesi">Cumartesi</option>
+              <option value="Pazar">Pazar</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Derslik / Lokasyon</label>
+            <input type="text" id="courseRoom" placeholder="G103 veya Online" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Başlangıç Saati</label>
+            <input type="time" id="courseStartTime" value="09:00" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Bitiş Saati</label>
+            <input type="time" id="courseEndTime" value="10:50" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Renk Teması</label>
+          <select id="courseColor" class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+            <option value="bg-teal-600 text-white border-teal-700">Teal / Turkuaz (MATH 240)</option>
+            <option value="bg-purple-600 text-white border-purple-700">Mor / Purple (CMPE 472)</option>
+            <option value="bg-sky-500 text-white border-sky-600">Gökyüzü / Sky (CMPE 421)</option>
+            <option value="bg-blue-600 text-white border-blue-700">Mavi / Blue (CMPE 414)</option>
+            <option value="bg-cyan-600 text-white border-cyan-700">Camgöbeği / Cyan (CMPE 325)</option>
+            <option value="bg-emerald-600 text-white border-emerald-700">Zümrüt / Emerald (PHYS 120)</option>
+            <option value="bg-lime-600 text-white border-lime-700">Limon / Lime (SENG 491)</option>
+            <option value="bg-rose-600 text-white border-rose-700">Gül / Rose (SENG 499)</option>
+            <option value="bg-amber-600 text-white border-amber-700">Kehribar / Amber</option>
+            <option value="bg-slate-700 text-white border-slate-800">Gri / Slate</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeCourseModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">İptal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. TASK MODAL (ADD / EDIT) -->
+  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 id="taskModalTitle" class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-emerald-600"></i> Yeni Çalışma Görevi Ekle
+        </h3>
+        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleTaskSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="taskEditId" value="">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Gün</label>
+            <select id="taskDay" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="Pazartesi">Pazartesi</option>
+              <option value="Salı">Salı</option>
+              <option value="Çarşamba">Çarşamba</option>
+              <option value="Perşembe">Perşembe</option>
+              <option value="Cuma">Cuma</option>
+              <option value="Cumartesi">Cumartesi</option>
+              <option value="Pazar">Pazar</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Saat / Zaman Dilimi</label>
+            <input type="text" id="taskTime" placeholder="11:15 - 12:45" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders</label>
+            <select id="taskCourse" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <!-- Dynamically populated from registered courses -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Başlangıç Durumu</label>
+            <select id="taskStatus" class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="planned">Planlandı (Bekliyor)</option>
+              <option value="in_progress">Devam Ediyor</option>
+              <option value="done">Tamamlandı</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Görev / Odak Açıklaması</label>
+          <input type="text" id="taskDesc" placeholder="Örn: Wireshark Lab analizi veya Bayes teoremi soru çözümü" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">İptal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. DEADLINE / MILESTONE MODAL -->
+  <div id="deadlineModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 id="deadlineModalTitle" class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-flag-checkered text-rose-600"></i> Yeni Sınav / Teslim Ekle
+        </h3>
+        <button onclick="closeDeadlineModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleDeadlineSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="deadlineEditId" value="">
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Başlık (Örn: MATH 240 — Exam 1)</label>
+          <input type="text" id="deadlineTitle" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">İlgili Ders</label>
+            <select id="deadlineCourse" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Teslim Türü</label>
+            <select id="deadlineType" class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+              <option value="Sınav">Sınav / Midterm</option>
+              <option value="Quiz">Quiz</option>
+              <option value="Teslim">Proje Teslimi</option>
+              <option value="Ödev">Ödev</option>
+              <option value="Final">Dönem Sonu / Final</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Tarih</label>
+            <input type="date" id="deadlineDate" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ağırlık (Örn: %25)</label>
+            <input type="text" id="deadlineWeight" placeholder="%25" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Öncelik Derecesi</label>
+          <select id="deadlinePriority" class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+            <option value="critical">🔴 Kritik (%25+ ağırlık veya 3 gün altı)</option>
+            <option value="high" selected>🟠 Yüksek Öncelik</option>
+            <option value="medium">🟡 Orta Öncelik</option>
+            <option value="low">🟢 Normal</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Açıklama / Kapsam Notları</label>
+          <input type="text" id="deadlineDesc" placeholder="Kapsanan konular, teslim kuralları vb." class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeDeadlineModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">İptal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. ADD COURSE TO GRADE SIMULATOR MODAL -->
+  <div id="gradeCourseModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-indigo-600"></i> Not Simülatörüne Ders Ekle
+        </h3>
+        <button onclick="closeAddGradeCourseModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleAddGradeCourseSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders Kodu</label>
+          <input type="text" id="gradeNewCode" placeholder="HIST 102" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Ders Adı</label>
+          <input type="text" id="gradeNewName" placeholder="Principles of Atatürk" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">AKTS (ECTS)</label>
+            <input type="number" id="gradeNewEcts" min="1" max="30" value="3" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Tahmini Final Hedefi</label>
+            <input type="number" id="gradeNewFinalTarget" min="0" max="100" value="80" required class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3">
+          <button type="button" onclick="closeAddGradeCourseModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">İptal</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold">Dersi Ekle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. DATA MANAGEMENT & CLOUD SYNC MODAL -->
+  <div id="syncModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-database text-blue-600"></i> Veri Yedekleme, İçe/Dışa Aktarma & Senkronizasyon
+        </h3>
+        <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        
+        <!-- JSON Export Block -->
+        <div class="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 flex items-center justify-between gap-3">
+          <div>
+            <div class="font-bold text-blue-900 dark:text-blue-300">Yedek Dosyası İndir (Export JSON)</div>
+            <p class="text-[11px] text-blue-700 dark:text-blue-400 mt-0.5">Tüm dersleriniz, çalışma kayıtlarınız, görevleriniz ve notlarınız zaman damgalı JSON dosyası olarak kaydedilir.</p>
+          </div>
+          <button onclick="exportDataJSON()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold whitespace-nowrap shadow-sm transition">
+            <i class="fa-solid fa-download mr-1"></i> JSON İndir
+          </button>
+        </div>
+
+        <!-- JSON Import Block -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white">Yedekten Geri Yükle (Import JSON)</div>
+          <p class="text-[11px] text-slate-500">Daha önce indirdiğiniz `.json` yedek dosyasını yükleyin.</p>
+          <div class="flex items-center gap-2 pt-1">
+            <input type="file" id="importFileInput" accept=".json" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-200 dark:file:bg-slate-700 file:text-slate-800 dark:file:text-slate-200 hover:file:bg-slate-300 cursor-pointer">
+            <button onclick="handleJSONImport('replace')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold whitespace-nowrap transition">
+              Üzerine Yaz
+            </button>
+            <button onclick="handleJSONImport('merge')" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold whitespace-nowrap transition">
+              Birleştir
+            </button>
+          </div>
+        </div>
+
+        <!-- Cloud Sync (GitHub Gist / JSONBin) Optional Progressive Enhancement -->
+        <div class="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/50 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-950 dark:text-indigo-300 flex items-center gap-1.5">
+              <i class="fa-brands fa-github text-indigo-600"></i> Bulut Senkronizasyonu (Gist / JSONBin)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-mono">İsteğe Bağlı</span>
+          </div>
+          <p class="text-[11px] text-slate-600 dark:text-slate-400">Veritabanı gerektirmeden cihazlar arası otomatik JSON senkronizasyonu için GitHub Gist ID ve Personal Access Token girebilirsiniz.</p>
+          
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <input type="password" id="syncGithubToken" placeholder="GitHub Token (PAT)" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs">
+            <input type="text" id="syncGistId" placeholder="Gist ID" class="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-mono">
+          </div>
+          
+          <div class="flex justify-end gap-2 pt-1">
+            <button onclick="pushToCloudGist()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] transition">
+              <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Buluta Gönder (Push)
+            </button>
+            <button onclick="pullFromCloudGist()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold text-[11px] transition">
+              <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Buluttan Çek (Pull)
+            </button>
+          </div>
+        </div>
+
+        <!-- Reset to Demo Seed Data -->
+        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <span class="text-[11px] text-slate-400">Tüm özel verileri temizleyip TEDÜ varsayılan programına dön:</span>
+          <button onclick="confirmResetDemoData()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold transition flex items-center gap-1 border border-rose-200 dark:border-rose-900/80">
+            <i class="fa-solid fa-rotate-left"></i> Fabrika Ayarlarına Sıfırla
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       FOOTER
+       ========================================== -->
+  <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 text-xs text-slate-500 text-center transition-colors mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-graduation-cap text-blue-600"></i>
+        <span>TED Üniversitesi — 2026-2027 Güz Yarıyılı Kişisel Akademik & Çalışma Sistemi</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Sıfır Sunucu • Tam Gizlilik (Local & IndexedDB)</span>
+        <button onclick="openSyncModal()" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Veri Yönetimi</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       APPLICATION LOGIC & CORE ARCHITECTURE JAVASCRIPT
+       ============================================================ -->
+  <script>
+    /* ============================================================
+       1. DATA STRUCTURES & SEED DATA (TED UNIVERSITY FALL 2026)
+       ============================================================ */
+
+    const SEED_COURSES = [
+      {
+        id: 'c1',
+        day: 'Pazartesi',
+        code: 'CMPE 472',
+        title: 'Computer Networks',
+        room: 'G108',
+        startTime: '09:00',
+        endTime: '10:50',
+        colorClass: 'bg-purple-600 text-white border-purple-700'
+      },
+      {
+        id: 'c2',
+        day: 'Pazartesi',
+        code: 'CMPE 421',
+        title: 'Artificial Intelligence',
+        room: 'D026',
+        startTime: '13:00',
+        endTime: '15:30',
+        colorClass: 'bg-sky-500 text-white border-sky-600'
+      },
+      {
+        id: 'c3',
+        day: 'Pazartesi',
+        code: 'CMPE 414',
+        title: 'Information Retrieval',
+        room: 'D028',
+        startTime: '18:00',
+        endTime: '20:30',
+        colorClass: 'bg-blue-600 text-white border-blue-700'
+      },
+      {
+        id: 'c4',
+        day: 'Salı',
+        code: 'MATH 240',
+        title: 'Probability & Statistics',
+        room: 'G103',
+        startTime: '11:00',
+        endTime: '12:50',
+        colorClass: 'bg-teal-600 text-white border-teal-700'
+      },
+      {
+        id: 'c5',
+        day: 'Salı',
+        code: 'CMPE 325',
+        title: 'Cryptography',
+        room: 'G103',
+        startTime: '15:00',
+        endTime: '17:30',
+        colorClass: 'bg-cyan-600 text-white border-cyan-700'
+      },
+      {
+        id: 'c6',
+        day: 'Çarşamba',
+        code: 'CMPE 472',
+        title: 'Computer Networks (Lab)',
+        room: 'GB13-PC-L',
+        startTime: '09:00',
+        endTime: '10:50',
+        colorClass: 'bg-purple-600 text-white border-purple-700'
+      },
+      {
+        id: 'c7',
+        day: 'Çarşamba',
+        code: 'MATH 240',
+        title: 'Probability & Statistics',
+        room: 'G103',
+        startTime: '13:00',
+        endTime: '13:50',
+        colorClass: 'bg-teal-600 text-white border-teal-700'
+      },
+      {
+        id: 'c8',
+        day: 'Cuma',
+        code: 'PHYS 120',
+        title: 'General Astronomy',
+        room: 'D032',
+        startTime: '16:00',
+        endTime: '17:50',
+        colorClass: 'bg-emerald-600 text-white border-emerald-700'
+      },
+      {
+        id: 'c9',
+        day: 'Cuma',
+        code: 'SENG 491',
+        title: 'Senior Project I',
+        room: 'Online',
+        startTime: '18:00',
+        endTime: '19:00',
+        colorClass: 'bg-lime-600 text-white border-lime-700'
+      },
+      {
+        id: 'c10',
+        day: 'Cuma',
+        code: 'SENG 499',
+        title: 'Summer Practice II',
+        room: 'Online',
+        startTime: '20:00',
+        endTime: '21:00',
+        colorClass: 'bg-rose-600 text-white border-rose-700'
+      }
+    ];
+
+    const SEED_STUDY_TASKS = [
+      { id: 't1', day: 'Pazartesi', time: '11:15 - 12:45', course: 'CMPE 472', desc: 'Ağ temelleri ve Wireshark lab hazırlığı', status: 'planned', priority: 'high' },
+      { id: 't2', day: 'Pazartesi', time: '16:00 - 17:30', course: 'CMPE 421', desc: 'Arama algoritmaları ve problem formülasyonu ödevi', status: 'done', priority: 'high' },
+      { id: 't3', day: 'Salı', time: '09:00 - 10:45', course: 'MATH 240', desc: 'Koşullu olasılık ve Bayes teoremi problem seti', status: 'done', priority: 'critical' },
+      { id: 't4', day: 'Salı', time: '13:15 - 14:45', course: 'CMPE 325', desc: 'Klasik şifreleme ve modüler aritmetik kripto alıştırmaları', status: 'in_progress', priority: 'medium' },
+      { id: 't5', day: 'Çarşamba', time: '11:00 - 12:45', course: 'CMPE 472', desc: 'Lab paket analiz çıktılarının raporlanması', status: 'planned', priority: 'medium' },
+      { id: 't6', day: 'Çarşamba', time: '14:30 - 17:00', course: 'MATH 240', desc: 'Ayrık rastgele değişkenler ve beklenen değer soruları', status: 'planned', priority: 'high' },
+      { id: 't7', day: 'Perşembe', time: '10:00 - 12:30', course: 'CMPE 325', desc: 'DES ve Blok şifreler Quiz 1 hazırlığı', status: 'planned', priority: 'high' },
+      { id: 't8', day: 'Perşembe', time: '14:00 - 16:30', course: 'CMPE 421', desc: 'Programlama ödevi 1 A* algoritması kodlama', status: 'planned', priority: 'high' },
+      { id: 't9', day: 'Cuma', time: '10:00 - 13:00', course: 'SENG 491', desc: 'Takım toplantısı & Proje öneri dokümanı sprint teslimi', status: 'planned', priority: 'critical' },
+      { id: 't10', day: 'Cumartesi', time: '11:00 - 13:30', course: 'SENG 499', desc: 'Staj defteri bölüm 2 taslak raporu hazırlığı', status: 'planned', priority: 'medium' },
+      { id: 't11', day: 'Pazar', time: '14:00 - 16:00', course: 'HIST 102', desc: 'HIST 102 haftalık Sunday Quiz ve kaynak okuma tekrarı', status: 'planned', priority: 'high' },
+      { id: 't12', day: 'Pazar', time: '16:30 - 18:30', course: 'MATH 240', desc: 'Haftalık soru çözüm tekrarı & formül kartları', status: 'planned', priority: 'medium' }
+    ];
+
+    const SEED_MILESTONES = [
+      {
+        id: 'd1',
+        title: 'CMPE 325 — Quiz 1',
+        course: 'CMPE 325',
+        type: 'Quiz',
+        date: '2026-10-23',
+        weight: '%5',
+        priority: 'high',
+        desc: 'Block Ciphers & DES şifreleme mekanizmaları.'
+      },
+      {
+        id: 'd2',
+        title: 'SENG 491 — Project Proposal',
+        course: 'SENG 491',
+        type: 'Teslim',
+        date: '2026-11-13',
+        weight: '%5',
+        priority: 'high',
+        desc: 'Ekip isimleri, danışman onayı ve 1-2 paragraf proje özeti.'
+      },
+      {
+        id: 'd3',
+        title: 'CMPE 421 — Programming Assignment 1',
+        course: 'CMPE 421',
+        type: 'Ödev',
+        date: '2026-11-05',
+        weight: '%10',
+        priority: 'high',
+        desc: 'Heuristic search & graph problem solver kodlaması.'
+      },
+      {
+        id: 'd4',
+        title: 'MATH 240 — Exam 1 (Ara Sınav 1)',
+        course: 'MATH 240',
+        type: 'Sınav',
+        date: '2026-11-11',
+        weight: '%27.5',
+        priority: 'critical',
+        desc: 'Hafta 7 Normal Dağılıma kadar olan tüm konular.'
+      },
+      {
+        id: 'd5',
+        title: 'CMPE 325 — Quiz 2',
+        course: 'CMPE 325',
+        type: 'Quiz',
+        date: '2026-11-13',
+        weight: '%5',
+        priority: 'high',
+        desc: 'Block Cipher Operations & Cipher Modes.'
+      },
+      {
+        id: 'd6',
+        title: 'SENG 491 — Project Specifications',
+        course: 'SENG 491',
+        type: 'Teslim',
+        date: '2026-11-20',
+        weight: '%20',
+        priority: 'critical',
+        desc: 'Kapsamlı gereksinim dokümanı, kısıtlar ve literatür taraması.'
+      },
+      {
+        id: 'd7',
+        title: 'HIST 102 — Midterm Exam',
+        course: 'HIST 102',
+        type: 'Sınav',
+        date: '2026-11-21',
+        weight: '%30',
+        priority: 'high',
+        desc: 'Cumartesi günü yapılacak ortak tarih ara sınavı.'
+      },
+      {
+        id: 'd8',
+        title: 'CMPE 325 — Midterm Sınavı',
+        course: 'CMPE 325',
+        type: 'Sınav',
+        date: '2026-11-22',
+        weight: '%35',
+        priority: 'critical',
+        desc: 'Pazar günü yapılacak büyük ara sınav!'
+      },
+      {
+        id: 'd9',
+        title: 'SENG 491 — Analysis Report',
+        course: 'SENG 491',
+        type: 'Teslim',
+        date: '2026-12-04',
+        weight: '%20',
+        priority: 'critical',
+        desc: 'Sistem modelleri, use case diyagramları ve arayüz mimarisi.'
+      },
+      {
+        id: 'd10',
+        title: 'CMPE 421 — Programming Assignment 2',
+        course: 'CMPE 421',
+        type: 'Ödev',
+        date: '2026-12-12',
+        weight: '%10',
+        priority: 'high',
+        desc: 'Makine öğrenmesi ve karar ağaçları teslimi.'
+      },
+      {
+        id: 'd11',
+        title: 'MATH 240 — Exam 2 (Ara Sınav 2)',
+        course: 'MATH 240',
+        type: 'Sınav',
+        date: '2026-12-23',
+        weight: '%27.5',
+        priority: 'critical',
+        desc: 'Merkezi Limit Teoremi ve Hipotez testleri.'
+      },
+      {
+        id: 'd12',
+        title: 'SENG 491 — High-Level Design (HLD)',
+        course: 'SENG 491',
+        type: 'Teslim',
+        date: '2026-12-30',
+        weight: '%20',
+        priority: 'critical',
+        desc: 'Alt sistem mimarisi, veri yönetimi ve dağıtım diyagramı.'
+      },
+      {
+        id: 'd13',
+        title: 'Dönem Sonu Finalleri Başlangıcı',
+        course: 'Genel',
+        type: 'Final',
+        date: '2027-01-08',
+        weight: '%40 - %45',
+        priority: 'critical',
+        desc: 'Üniversite final haftası kapsamlı sınavları.'
+      }
+    ];
+
+    const SEED_STUDY_LOGS = [
+      { id: 'l1', date: '2026-10-09', course: 'MATH 240', plannedMinutes: 50, actualMinutes: 50, topic: 'Bayes Kuralı ve Koşullu Olasılık', rating: 5, notes: 'Örnek soruların tamamı başarıyla çözüldü.' },
+      { id: 'l2', date: '2026-10-10', course: 'CMPE 325', plannedMinutes: 45, actualMinutes: 40, topic: 'DES Algoritması Feistel Yapısı', rating: 4, notes: 'S-Box adımları tekrar edilecek.' },
+      { id: 'l3', date: '2026-10-11', course: 'CMPE 421', plannedMinutes: 60, actualMinutes: 55, topic: 'A* ve Heuristic Arama Mantığı', rating: 4, notes: 'Manhattan mesafesi örneği incelendi.' },
+      { id: 'l4', date: '2026-10-11', course: 'CMPE 472', plannedMinutes: 30, actualMinutes: 30, topic: 'Wireshark TCP Handshake Paket İncelemesi', rating: 5, notes: 'SYN, SYN-ACK, ACK bayrakları doğrulandı.' }
+    ];
+
+    const SEED_GRADES = [
+      { code: 'MATH 240', name: 'Probability & Statistics', ects: 6, midterm: 78, coursework: 85, finalTarget: 80, grade: 'BA', point: 3.5 },
+      { code: 'CMPE 325', name: 'Cryptography', ects: 5, midterm: 72, coursework: 80, finalTarget: 75, grade: 'BB', point: 3.0 },
+      { code: 'CMPE 421', name: 'Artificial Intelligence', ects: 5, midterm: 85, coursework: 90, finalTarget: 85, grade: 'AA', point: 4.0 },
+      { code: 'CMPE 414', name: 'Information Retrieval', ects: 5, midterm: 80, coursework: 80, finalTarget: 80, grade: 'BA', point: 3.5 },
+      { code: 'CMPE 472', name: 'Computer Networks', ects: 5, midterm: 75, coursework: 82, finalTarget: 78, grade: 'BB', point: 3.0 },
+      { code: 'SENG 491', name: 'Senior Project I', ects: 5, midterm: 88, coursework: 90, finalTarget: 90, grade: 'AA', point: 4.0 },
+      { code: 'SENG 499', name: 'Summer Practice II', ects: 2, midterm: 90, coursework: 92, finalTarget: 90, grade: 'AA', point: 4.0 },
+      { code: 'PHYS 120', name: 'General Astronomy', ects: 4, midterm: 82, coursework: 85, finalTarget: 85, grade: 'BA', point: 3.5 },
+      { code: 'HIST 102', name: 'Principles of Atatürk', ects: 2, midterm: 85, coursework: 90, finalTarget: 85, grade: 'AA', point: 4.0 }
+    ];
+
+    /* ============================================================
+       2. STORAGE SERVICE & STATE MANAGEMENT
+       ============================================================ */
+
+    const STORAGE_KEY_V2 = 'tedu_academic_tracker_v2';
+    const STORAGE_KEY_THEME = 'tedu_theme_mode';
+
+    let appState = {
+      courses: [],
+      studyTasks: [],
+      studyLogs: [],
+      milestones: [],
+      grades: [],
+      syncConfig: { githubToken: '', gistId: '' }
+    };
+
+    function loadInitialData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_V2);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          appState.courses = parsed.courses || SEED_COURSES;
+          appState.studyTasks = parsed.studyTasks || SEED_STUDY_TASKS;
+          appState.studyLogs = parsed.studyLogs || SEED_STUDY_LOGS;
+          appState.milestones = parsed.milestones || SEED_MILESTONES;
+          appState.grades = parsed.grades || SEED_GRADES;
+          appState.syncConfig = parsed.syncConfig || { githubToken: '', gistId: '' };
+        } else {
+          // Check for legacy v1 keys if any
+          const legLogs = localStorage.getItem('tedu_study_logs_v1');
+          const legTasks = localStorage.getItem('tedu_study_tasks_v1');
+          const legGrades = localStorage.getItem('tedu_grades_v1');
+
+          appState.courses = SEED_COURSES;
+          appState.studyTasks = legTasks ? JSON.parse(legTasks) : SEED_STUDY_TASKS;
+          appState.studyLogs = legLogs ? JSON.parse(legLogs) : SEED_STUDY_LOGS;
+          appState.milestones = SEED_MILESTONES;
+          appState.grades = legGrades ? JSON.parse(legGrades) : SEED_GRADES;
+          appState.syncConfig = { githubToken: '', gistId: '' };
+          saveState();
+        }
+      } catch (err) {
+        console.error('Error loading localStorage, resetting to seeds:', err);
+        resetStateToSeeds();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(appState));
+        syncToIndexedDB(appState);
+      } catch (e) {
+        console.warn('LocalStorage quota or write error:', e);
+      }
+    }
+
+    function resetStateToSeeds() {
+      appState = {
+        courses: JSON.parse(JSON.stringify(SEED_COURSES)),
+        studyTasks: JSON.parse(JSON.stringify(SEED_STUDY_TASKS)),
+        studyLogs: JSON.parse(JSON.stringify(SEED_STUDY_LOGS)),
+        milestones: JSON.parse(JSON.stringify(SEED_MILESTONES)),
+        grades: JSON.parse(JSON.stringify(SEED_GRADES)),
+        syncConfig: { githubToken: '', gistId: '' }
+      };
+      saveState();
+    }
+
+    // IndexedDB backup layer
+    function syncToIndexedDB(data) {
+      if (!window.indexedDB) return;
+      try {
+        const req = indexedDB.open('TeduAcademicDB', 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('appStore')) {
+            db.createObjectStore('appStore', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => {
+          const db = e.target.result;
+          const tx = db.transaction('appStore', 'readwrite');
+          tx.objectStore('appStore').put({ id: 'current_state', data, updatedAt: Date.now() });
+        };
+      } catch (e) {
+        console.warn('IndexedDB write issue:', e);
+      }
+    }
+
+    /* ============================================================
+       3. WEB AUDIO API SYNTHESIZER (TIMER ALERT)
+       ============================================================ */
+
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    function playChimeAlert() {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chord
+        freqs.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          
+          gain.gain.setValueAtTime(0.001, now + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.3, now + idx * 0.12 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 1.2);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 1.3);
+        });
+      } catch (e) {
+        console.warn('Audio synthesis unavailable:', e);
+      }
+    }
+
+    function toggleTimerSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('timerSoundIcon');
+      const label = document.getElementById('timerSoundToggle').querySelector('span');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-emerald-400';
+        label.textContent = 'Ses Açık';
+        showToast('🔊 Sesli bildirim açıldı');
+        playChimeAlert();
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+        label.textContent = 'Sessiz';
+        showToast('🔇 Sesli bildirim kapatıldı');
+      }
+    }
+
+    /* ============================================================
+       4. INITIALIZATION & TAB SWITCHER
+       ============================================================ */
+
+    let chartInstance = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadInitialData();
+      initTheme();
+      populateCourseSelectOptions();
+      renderTodayClasses();
+      renderTimetable();
+      renderStudyTasks();
+      renderStudyLogs();
+      renderDeadlines();
+      renderGradeCalculator();
+      updateDashboardStats();
+      initChart();
+      initTimer();
+      initMobileDayTabs();
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-950/60', 'font-bold');
+        btn.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+
+      const activeBtn = document.getElementById('tab-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-950/60', 'font-bold');
+        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+      }
+
+      ['dashboard', 'timetable', 'study-plan', 'study-tracker', 'deadlines', 'grade-calc'].forEach(id => {
+        const view = document.getElementById('view-' + id);
+        if (view) {
+          if (id === tabId) {
+            view.classList.remove('hidden');
+          } else {
+            view.classList.add('hidden');
+          }
+        }
+      });
+
+      if (tabId === 'dashboard') {
+        setTimeout(updateChart, 100);
+      }
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem(STORAGE_KEY_THEME, isDark ? 'dark' : 'light');
+        if (chartInstance) chartInstance.destroy();
+        initChart();
+      });
+    }
+
+    function populateCourseSelectOptions() {
+      const courseMap = new Map();
+      appState.courses.forEach(c => courseMap.set(c.code, c.title));
+      if (!courseMap.has('HIST 102')) courseMap.set('HIST 102', 'Principles of Atatürk');
+
+      const selectLog = document.getElementById('logCourse');
+      const selectTask = document.getElementById('taskCourse');
+      const selectDeadline = document.getElementById('deadlineCourse');
+      const selectDeadlineFilter = document.getElementById('deadlineCourseFilter');
+
+      const optionsHtml = Array.from(courseMap.entries()).map(([code, title]) => 
+        `<option value="${code}">${code} — ${title}</option>`
+      ).join('');
+
+      selectLog.innerHTML = optionsHtml;
+      selectTask.innerHTML = optionsHtml;
+      selectDeadline.innerHTML = optionsHtml;
+
+      selectDeadlineFilter.innerHTML = `<option value="ALL">Tüm Dersler</option>` + 
+        Array.from(courseMap.keys()).map(code => `<option value="${code}">${code}</option>`).join('');
+
+      syncTimerTargetCourse();
+    }
+
+    /* ============================================================
+       5. VISUAL TIMETABLE MODULE (CRUD & 08:00 - 22:00 GRID)
+       ============================================================ */
+
+    const DAYS_ORDER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+    let selectedMobileDay = 'Pazartesi';
+
+    function parseHour(timeStr) {
+      if (!timeStr) return 9;
+      return parseInt(timeStr.split(':')[0], 10);
+    }
+
+    function renderTimetable() {
+      renderTimetableDesktop();
+      renderTimetableLegend();
+      renderMobileTimetable();
+    }
+
+    function renderTimetableLegend() {
+      const legend = document.getElementById('timetableLegend');
+      const uniqueCodes = new Map();
+      appState.courses.forEach(c => {
+        if (!uniqueCodes.has(c.code)) uniqueCodes.set(c.code, c.colorClass);
+      });
+
+      legend.innerHTML = Array.from(uniqueCodes.entries()).map(([code, colorClass]) => `
+        <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${colorClass} shadow-xs">
+          ${code}
+        </span>
+      `).join('');
+    }
+
+    function renderTimetableDesktop() {
+      const container = document.getElementById('timetableRowsContainer');
+      container.innerHTML = '';
+
+      // 08:00 to 21:00 slots (representing up to 22:00)
+      for (let hour = 8; hour <= 21; hour++) {
+        const hourStr = `${hour < 10 ? '0' + hour : hour}:00`;
+        const row = document.createElement('div');
+        row.className = 'timetable-grid-desktop min-h-[64px] hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition';
+
+        // Time slot label
+        const timeCol = document.createElement('div');
+        timeCol.className = 'p-2 text-center font-mono font-bold text-slate-400 dark:text-slate-500 border-r border-slate-100 dark:border-slate-800 flex items-center justify-center text-[11px]';
+        timeCol.textContent = hourStr;
+        row.appendChild(timeCol);
+
+        // 7 Days Columns
+        DAYS_ORDER.forEach(day => {
+          const dayCol = document.createElement('div');
+          dayCol.className = 'p-1.5 border-r border-slate-100 dark:border-slate-800 relative group';
+
+          // Check courses running during this hour
+          const matches = appState.courses.filter(c => {
+            if (c.day !== day) return false;
+            const startH = parseHour(c.startTime);
+            const endH = parseHour(c.endTime) || startH + 1;
+            return startH <= hour && endH > hour;
+          });
+
+          matches.forEach(c => {
+            const startH = parseHour(c.startTime);
+            if (startH === hour) {
+              const card = document.createElement('div');
+              card.className = `p-2.5 rounded-xl text-xs font-semibold shadow-sm transition transform hover:scale-[1.02] cursor-pointer ${c.colorClass}`;
+              card.innerHTML = `
+                <div class="flex items-center justify-between gap-1">
+                  <span class="font-extrabold text-[11px] tracking-wide">${c.code}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-black/25 font-mono">${c.room}</span>
+                    <button onclick="event.stopPropagation(); deleteCourse('${c.id}')" title="Sil" class="text-white/70 hover:text-white text-[10px] ml-1">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="text-[10px] opacity-95 truncate mt-0.5">${c.title}</div>
+                <div class="text-[9px] opacity-80 mt-1 font-mono flex items-center justify-between">
+                  <span>${c.startTime} - ${c.endTime}</span>
+                  <button onclick="event.stopPropagation(); editCourse('${c.id}')" title="Düzenle" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-pen-to-square text-[9px]"></i>
+                  </button>
+                </div>
+              `;
+              card.onclick = () => editCourse(c.id);
+              dayCol.appendChild(card);
+            }
+          });
+
+          row.appendChild(dayCol);
+        });
+
+        container.appendChild(row);
+      }
+    }
+
+    function initMobileDayTabs() {
+      const container = document.getElementById('mobileDayTabs');
+      container.innerHTML = DAYS_ORDER.map(day => `
+        <button onclick="setMobileDay('${day}')" id="mobileDayBtn-${day}" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+          day === selectedMobileDay 
+            ? 'bg-blue-600 text-white' 
+            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
+        }">
+          ${day}
+        </button>
+      `).join('');
+      renderMobileTimetable();
+    }
+
+    function setMobileDay(day) {
+      selectedMobileDay = day;
+      initMobileDayTabs();
+    }
+
+    function renderMobileTimetable() {
+      const container = document.getElementById('mobileTimetableContainer');
+      const dayClasses = appState.courses.filter(c => c.day === selectedMobileDay);
+
+      if (dayClasses.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-xs">
+            <i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-50"></i>
+            <p>${selectedMobileDay} günü için kayıtlı ders bulunmuyor.</p>
+          </div>
+        `;
+        return;
+      }
+
+      dayClasses.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      container.innerHTML = dayClasses.map(c => `
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-2.5 h-12 rounded-full ${c.colorClass.split(' ')[0]}"></div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-xs text-slate-900 dark:text-white">${c.code}</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${c.room}</span>
+              </div>
+              <div class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">${c.title}</div>
+              <div class="text-[11px] font-mono text-slate-500 mt-1">
+                <i class="fa-regular fa-clock mr-1"></i>${c.startTime} - ${c.endTime}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="editCourse('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-blue-600 transition" title="Düzenle">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deleteCourse('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-rose-600 transition" title="Sil">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Course CRUD Modals & Handlers
+    function openCourseModal(editId = null) {
+      const modal = document.getElementById('courseModal');
+      const title = document.getElementById('courseModalTitle');
+      document.getElementById('courseEditId').value = editId || '';
+
+      if (editId) {
+        const item = appState.courses.find(c => c.id === editId);
+        if (item) {
+          title.innerHTML = '<i class="fa-solid fa-pen text-blue-600"></i> Ders Bloğunu Düzenle';
+          document.getElementById('courseCode').value = item.code;
+          document.getElementById('courseTitle').value = item.title;
+          document.getElementById('courseDay').value = item.day;
+          document.getElementById('courseRoom').value = item.room;
+          document.getElementById('courseStartTime').value = item.startTime;
+          document.getElementById('courseEndTime').value = item.endTime;
+          document.getElementById('courseColor').value = item.colorClass;
+        }
+      } else {
+        title.innerHTML = '<i class="fa-solid fa-calendar-plus text-blue-600"></i> Yeni Ders Bloğu Ekle';
+        document.getElementById('courseCode').value = '';
+        document.getElementById('courseTitle').value = '';
+        document.getElementById('courseDay').value = selectedMobileDay || 'Pazartesi';
+        document.getElementById('courseRoom').value = '';
+        document.getElementById('courseStartTime').value = '09:00';
+        document.getElementById('courseEndTime').value = '10:50';
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCourseModal() {
+      const modal = document.getElementById('courseModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleCourseSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('courseEditId').value;
+      const code = document.getElementById('courseCode').value.trim();
+      const title = document.getElementById('courseTitle').value.trim();
+      const day = document.getElementById('courseDay').value;
+      const room = document.getElementById('courseRoom').value.trim();
+      const startTime = document.getElementById('courseStartTime').value;
+      const endTime = document.getElementById('courseEndTime').value;
+      const colorClass = document.getElementById('courseColor').value;
+
+      if (editId) {
+        const idx = appState.courses.findIndex(c => c.id === editId);
+        if (idx !== -1) {
+          appState.courses[idx] = { ...appState.courses[idx], code, title, day, room, startTime, endTime, colorClass };
+          showToast(`"${code}" dersi güncellendi`);
+        }
+      } else {
+        const newCourse = {
+          id: 'c_' + Date.now(),
+          code,
+          title,
+          day,
+          room,
+          startTime,
+          endTime,
+          colorClass
+        };
+        appState.courses.push(newCourse);
+        showToast(`"${code}" programınıza eklendi`);
+      }
+
+      saveState();
+      populateCourseSelectOptions();
+      renderTimetable();
+      renderTodayClasses();
+      closeCourseModal();
+    }
+
+    function editCourse(id) {
+      openCourseModal(id);
+    }
+
+    function deleteCourse(id) {
+      const c = appState.courses.find(x => x.id === id);
+      if (!c) return;
+      if (confirm(`"${c.code}" ders bloğunu programdan silmek istediğinize emin misiniz?`)) {
+        appState.courses = appState.courses.filter(x => x.id !== id);
+        saveState();
+        populateCourseSelectOptions();
+        renderTimetable();
+        renderTodayClasses();
+        showToast(`"${c.code}" programdan silindi`);
+      }
+    }
+
+    function renderTodayClasses() {
+      const container = document.getElementById('todayClassesContainer');
+      const badge = document.getElementById('currentDayBadge');
+      
+      const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+      const realDayName = dayNames[new Date().getDay()] || 'Pazartesi';
+      
+      badge.textContent = `Bugün: ${realDayName}`;
+
+      const todayList = appState.courses.filter(c => c.day === realDayName);
+
+      if (todayList.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <i class="fa-solid fa-mug-hot text-2xl mb-2 text-slate-300"></i>
+            <p class="text-xs">Bugün (${realDayName}) kayıtlı yüz yüze dersiniz bulunmuyor. Serbest çalışma günü!</p>
+          </div>
+        `;
+        return;
+      }
+
+      todayList.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      container.innerHTML = todayList.map(c => `
+        <div class="p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-2.5 h-10 rounded-full ${c.colorClass.split(' ')[0]}"></div>
+            <div>
+              <div class="font-bold text-xs text-slate-900 dark:text-white">${c.code} — ${c.title}</div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                <span><i class="fa-regular fa-clock mr-1"></i>${c.startTime} - ${c.endTime}</span>
+                <span>•</span>
+                <span><i class="fa-solid fa-location-dot mr-1"></i>Derslik: <strong class="text-slate-700 dark:text-slate-300">${c.room}</strong></span>
+              </div>
+            </div>
+          </div>
+          <button onclick="startTimerForCourse('${c.code}')" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-300 text-[11px] font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-play text-[9px]"></i> Çalış
+          </button>
+        </div>
+      `).join('');
+    }
+
+    /* ============================================================
+       6. STUDY TASK PLANNER & FOCUS CHECKLIST MODULE (3-STATE)
+       ============================================================ */
+
+    function renderStudyTasks() {
+      const container = document.getElementById('studyTaskListContainer');
+      const dayFilter = document.getElementById('taskDayFilter').value;
+      const statusFilter = document.getElementById('taskStatusFilter').value;
+
+      let filtered = appState.studyTasks;
+      if (dayFilter !== 'ALL') filtered = filtered.filter(t => t.day === dayFilter);
+      if (statusFilter !== 'ALL') filtered = filtered.filter(t => t.status === statusFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
+            Seçili filtrelere uygun çalışma görevi bulunamadı.
+          </div>
+        `;
+      } else {
+        container.innerHTML = filtered.map(task => {
+          let statusBadge = '';
+          let cardBg = 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm';
+          let textStyle = 'text-slate-900 dark:text-white';
+
+          if (task.status === 'done') {
+            statusBadge = '<span class="text-emerald-600 dark:text-emerald-400 font-bold"><i class="fa-solid fa-check-circle mr-1"></i>Tamamlandı</span>';
+            cardBg = 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60';
+            textStyle = 'line-through text-slate-400 dark:text-slate-500';
+          } else if (task.status === 'in_progress') {
+            statusBadge = '<span class="text-amber-600 dark:text-amber-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Devam Ediyor</span>';
+            cardBg = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60';
+          } else {
+            statusBadge = '<span class="text-slate-500 dark:text-slate-400 font-semibold"><i class="fa-regular fa-circle mr-1"></i>Planlandı</span>';
+          }
+
+          return `
+            <div class="p-4 rounded-2xl border transition-all ${cardBg}">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-2.5">
+                  <button onclick="cycleTaskStatus('${task.id}')" title="Durumu Değiştir" class="mt-0.5 text-base transition">
+                    ${task.status === 'done' 
+                      ? '<i class="fa-solid fa-circle-check text-emerald-500"></i>' 
+                      : task.status === 'in_progress' 
+                      ? '<i class="fa-solid fa-circle-half-stroke text-amber-500"></i>' 
+                      : '<i class="fa-regular fa-circle text-slate-300 dark:text-slate-600 hover:text-blue-500"></i>'}
+                  </button>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${getCourseBadgeColor(task.course)}">${task.course}</span>
+                      <span class="text-[11px] font-mono text-slate-400 font-medium">${task.day} • ${task.time}</span>
+                    </div>
+                    <div class="text-xs font-bold mt-1.5 ${textStyle}">
+                      ${task.desc}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button onclick="editTask('${task.id}')" title="Düzenle" class="text-slate-300 hover:text-blue-500 text-xs p-1">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button onclick="deleteTask('${task.id}')" title="Sil" class="text-slate-300 hover:text-rose-500 text-xs p-1">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px]">
+                <div>${statusBadge}</div>
+                <button onclick="startTimerForTask('${task.course}', '${encodeURIComponent(task.desc)}')" class="text-blue-600 dark:text-blue-400 hover:underline font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-play text-[9px]"></i> Bu Derse Odaklan →
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Update task completion progress
+      const total = appState.studyTasks.length;
+      const doneCount = appState.studyTasks.filter(t => t.status === 'done').length;
+      const pct = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+
+      document.getElementById('planPercentText').textContent = `%${pct}`;
+      document.getElementById('planProgressBar').style.width = `${pct}%`;
+      document.getElementById('planRatioBadge').textContent = `${doneCount} / ${total} tamamlandı`;
+      document.getElementById('statTaskProgress').textContent = `%${pct}`;
+      document.getElementById('statTaskRatio').textContent = `${doneCount} / ${total} tamamlandı`;
+    }
+
+    function cycleTaskStatus(taskId) {
+      const task = appState.studyTasks.find(t => t.id === taskId);
+      if (!task) return;
+      if (task.status === 'planned') task.status = 'in_progress';
+      else if (task.status === 'in_progress') task.status = 'done';
+      else task.status = 'planned';
+
+      saveState();
+      renderStudyTasks();
+    }
+
+    function openTaskModal(editId = null) {
+      const modal = document.getElementById('taskModal');
+      const title = document.getElementById('taskModalTitle');
+      document.getElementById('taskEditId').value = editId || '';
+
+      if (editId) {
+        const item = appState.studyTasks.find(t => t.id === editId);
+        if (item) {
+          title.innerHTML = '<i class="fa-solid fa-pen text-emerald-600"></i> Görevi Düzenle';
+          document.getElementById('taskDay').value = item.day;
+          document.getElementById('taskTime').value = item.time;
+          document.getElementById('taskCourse').value = item.course;
+          document.getElementById('taskStatus').value = item.status || 'planned';
+          document.getElementById('taskDesc').value = item.desc;
+        }
+      } else {
+        title.innerHTML = '<i class="fa-solid fa-plus-circle text-emerald-600"></i> Yeni Çalışma Görevi Ekle';
+        document.getElementById('taskDay').value = 'Pazartesi';
+        document.getElementById('taskTime').value = '14:00 - 15:30';
+        document.getElementById('taskStatus').value = 'planned';
+        document.getElementById('taskDesc').value = '';
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTaskModal() {
+      const modal = document.getElementById('taskModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleTaskSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('taskEditId').value;
+      const day = document.getElementById('taskDay').value;
+      const time = document.getElementById('taskTime').value.trim();
+      const course = document.getElementById('taskCourse').value;
+      const status = document.getElementById('taskStatus').value;
+      const desc = document.getElementById('taskDesc').value.trim();
+
+      if (editId) {
+        const idx = appState.studyTasks.findIndex(t => t.id === editId);
+        if (idx !== -1) {
+          appState.studyTasks[idx] = { ...appState.studyTasks[idx], day, time, course, status, desc };
+          showToast('Görev güncellendi');
+        }
+      } else {
+        appState.studyTasks.push({
+          id: 't_' + Date.now(),
+          day,
+          time,
+          course,
+          status,
+          desc,
+          priority: 'medium'
+        });
+        showToast('Yeni görev planına eklendi');
+      }
+
+      saveState();
+      renderStudyTasks();
+      closeTaskModal();
+    }
+
+    function editTask(id) {
+      openTaskModal(id);
+    }
+
+    function deleteTask(id) {
+      appState.studyTasks = appState.studyTasks.filter(t => t.id !== id);
+      saveState();
+      renderStudyTasks();
+      showToast('Görev silindi');
+    }
+
+    function startTimerForTask(course, descEncoded) {
+      const desc = decodeURIComponent(descEncoded);
+      switchTab('study-tracker');
+      
+      const select = document.getElementById('logCourse');
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value === course) {
+          select.selectedIndex = i;
+          break;
+        }
+      }
+      document.getElementById('logTopic').value = desc;
+      syncTimerTargetCourse();
+      setTimerPreset('pomodoro', 25);
+      toggleTimer();
+    }
+
+    /* ============================================================
+       7. STUDY LOGGER & BUILT-IN FOCUS TIMER (POMODORO / STOPWATCH)
+       ============================================================ */
+
+    let timerInterval = null;
+    let timerTotalSeconds = 25 * 60;
+    let timerRemainingSeconds = 25 * 60;
+    let timerRunning = false;
+    let currentMode = 'pomodoro';
+
+    function initTimer() {
+      updateTimerDisplay();
+    }
+
+    function syncTimerTargetCourse() {
+      const sel = document.getElementById('logCourse');
+      const targetLabel = document.getElementById('timerTargetCourse');
+      if (sel && targetLabel) {
+        targetLabel.textContent = sel.value;
+      }
+    }
+
+    function setTimerPreset(mode, minutes) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      currentMode = mode;
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-400');
+      });
+
+      const btnMap = {
+        'pomodoro': 'preset-pomo',
+        'short_break': 'preset-sbreak',
+        'long_break': 'preset-lbreak',
+        'stopwatch': 'preset-stopwatch'
+      };
+
+      const activeBtn = document.getElementById(btnMap[mode]);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-blue-600', 'text-white');
+        activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
+      }
+
+      if (mode === 'stopwatch') {
+        timerTotalSeconds = 0;
+        timerRemainingSeconds = 0;
+        document.getElementById('timerGoalLabel').textContent = 'Serbest Sayaç';
+      } else {
+        timerTotalSeconds = minutes * 60;
+        timerRemainingSeconds = minutes * 60;
+        document.getElementById('timerGoalLabel').textContent = `Hedef: ${minutes} Dk`;
+        document.getElementById('logPlannedDuration').value = minutes;
+      }
+
+      document.getElementById('timerToggleIcon').className = 'fa-solid fa-play';
+      document.getElementById('timerToggleText').textContent = 'Başlat';
+      document.getElementById('timerStatusLabel').textContent = 'Hazır • Başlatmak için dokunun';
+      updateTimerDisplay();
+    }
+
+    function toggleTimer() {
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timerToggleIcon').className = 'fa-solid fa-play';
+        document.getElementById('timerToggleText').textContent = 'Devam Et';
+        document.getElementById('timerStatusLabel').textContent = 'Durduruldu';
+      } else {
+        timerRunning = true;
+        document.getElementById('timerToggleIcon').className = 'fa-solid fa-pause';
+        document.getElementById('timerToggleText').textContent = 'Duraklat';
+        document.getElementById('timerStatusLabel').textContent = 'Odaklanılıyor...';
+
+        timerInterval = setInterval(() => {
+          if (currentMode === 'stopwatch') {
+            timerRemainingSeconds++;
+          } else {
+            if (timerRemainingSeconds > 0) {
+              timerRemainingSeconds--;
+            } else {
+              clearInterval(timerInterval);
+              timerRunning = false;
+              handleTimerComplete();
+            }
+          }
+          updateTimerDisplay();
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerRemainingSeconds = currentMode === 'stopwatch' ? 0 : timerTotalSeconds;
+
+      document.getElementById('timerToggleIcon').className = 'fa-solid fa-play';
+      document.getElementById('timerToggleText').textContent = 'Başlat';
+      document.getElementById('timerStatusLabel').textContent = 'Sıfırlandı';
+      updateTimerDisplay();
+    }
+
+    function triggerTimerComplete() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      handleTimerComplete();
+    }
+
+    function handleTimerComplete() {
+      playChimeAlert();
+      showToast('🎉 Tebrikler! Odaklanma oturumu tamamlandı!');
+      
+      const elapsedMins = currentMode === 'stopwatch' 
+        ? Math.max(1, Math.round(timerRemainingSeconds / 60))
+        : Math.max(1, Math.round((timerTotalSeconds - timerRemainingSeconds) / 60) || Math.round(timerTotalSeconds / 60));
+
+      document.getElementById('logActualDuration').value = elapsedMins;
+      document.getElementById('logTopic').focus();
+      document.getElementById('timerStatusLabel').textContent = 'Oturum bitti • Günlüğe kaydedebilirsiniz';
+      
+      document.getElementById('timerToggleIcon').className = 'fa-solid fa-play';
+      document.getElementById('timerToggleText').textContent = 'Yeni Oturum';
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerRemainingSeconds / 60);
+      const secs = timerRemainingSeconds % 60;
+      const str = `${mins < 10 ? '0' + mins : mins}:${secs < 10 ? '0' + secs : secs}`;
+
+      document.getElementById('timerDisplay').textContent = str;
+
+      const badge = document.getElementById('globalTimerBadge');
+      const text = document.getElementById('globalTimerText');
+      if (timerRunning) {
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        text.textContent = str;
+      } else if (timerRemainingSeconds === timerTotalSeconds || (currentMode === 'stopwatch' && timerRemainingSeconds === 0)) {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+      }
+    }
+
+    function startTimerForCourse(courseCode) {
+      switchTab('study-tracker');
+      const select = document.getElementById('logCourse');
+      for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value.includes(courseCode)) {
+          select.selectedIndex = i;
+          break;
+        }
+      }
+      syncTimerTargetCourse();
+      setTimerPreset('pomodoro', 25);
+      toggleTimer();
+    }
+
+    function handleLogSubmit(e) {
+      e.preventDefault();
+      const course = document.getElementById('logCourse').value;
+      const plannedMinutes = parseInt(document.getElementById('logPlannedDuration').value, 10) || 25;
+      const actualMinutes = parseInt(document.getElementById('logActualDuration').value, 10) || 25;
+      const topic = document.getElementById('logTopic').value.trim();
+      const rating = parseInt(document.getElementById('logRating').value, 10) || 4;
+      const notes = document.getElementById('logNotes').value.trim();
+
+      const newLog = {
+        id: 'l_' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        course,
+        plannedMinutes,
+        actualMinutes,
+        topic,
+        rating,
+        notes
+      };
+
+      appState.studyLogs.push(newLog);
+      saveState();
+
+      document.getElementById('studyLogForm').reset();
+      document.getElementById('logPlannedDuration').value = 25;
+      document.getElementById('logActualDuration').value = 25;
+
+      renderStudyLogs();
+      updateChart();
+      updateDashboardStats();
+      showToast('Çalışma oturumu günlüğe kaydedildi!');
+    }
+
+    function renderStudyLogs() {
+      const tbody = document.getElementById('studyLogTableBody');
+      tbody.innerHTML = '';
+
+      if (appState.studyLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">Henüz kaydedilmiş çalışma oturumu bulunmuyor.</td></tr>`;
+        return;
+      }
+
+      appState.studyLogs.slice().reverse().forEach(log => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition';
+
+        const starDisplay = '★'.repeat(Number(log.rating || 4)) + '☆'.repeat(5 - Number(log.rating || 4));
+
+        tr.innerHTML = `
+          <td class="p-2.5 font-mono text-slate-500 text-[11px] whitespace-nowrap">${log.date}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded font-extrabold text-[10px] ${getCourseBadgeColor(log.course)}">${log.course}</span></td>
+          <td class="p-2.5 font-semibold text-slate-800 dark:text-slate-200">${log.topic}</td>
+          <td class="p-2.5 text-center font-mono text-[11px]">
+            <span class="text-slate-400">${log.plannedMinutes || 25}dk</span> / 
+            <strong class="text-blue-600 dark:text-blue-400">${log.actualMinutes || log.duration || 25}dk</strong>
+          </td>
+          <td class="p-2.5 text-center text-amber-500 font-mono text-[11px]">${starDisplay}</td>
+          <td class="p-2.5 text-slate-500 text-[11px] max-w-[200px] truncate" title="${log.notes || ''}">${log.notes || '-'}</td>
+          <td class="p-2.5 text-right">
+            <button onclick="deleteStudyLog('${log.id}')" title="Sil" class="text-slate-300 hover:text-rose-500 transition p-1">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteStudyLog(id) {
+      appState.studyLogs = appState.studyLogs.filter(l => l.id !== id);
+      saveState();
+      renderStudyLogs();
+      updateChart();
+      updateDashboardStats();
+      showToast('Çalışma kaydı silindi');
+    }
+
+    function clearStudyLogs() {
+      if (confirm('Tüm çalışma geçmişini temizlemek istediğinize emin misiniz?')) {
+        appState.studyLogs = [];
+        saveState();
+        renderStudyLogs();
+        updateChart();
+        updateDashboardStats();
+        showToast('Tüm çalışma kayıtları temizlendi');
+      }
+    }
+
+    /* ============================================================
+       8. DEADLINES & MILESTONES MODULE
+       ============================================================ */
+
+    function renderDeadlines() {
+      const container = document.getElementById('deadlinesGrid');
+      const courseFilter = document.getElementById('deadlineCourseFilter').value;
+      const priorityFilter = document.getElementById('deadlinePriorityFilter').value;
+
+      let filtered = appState.milestones;
+      if (courseFilter !== 'ALL') filtered = filtered.filter(d => d.course === courseFilter);
+      if (priorityFilter !== 'ALL') filtered = filtered.filter(d => d.priority === priorityFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
+            Seçili kriterlere uygun teslim veya sınav bulunamadı.
+          </div>
+        `;
+        return;
+      }
+
+      const now = new Date('2026-10-11T00:00:00'); // Baseline current date
+
+      filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      container.innerHTML = filtered.map(d => {
+        const deadlineDate = new Date(d.date + 'T23:59:59');
+        const diffTime = deadlineDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let urgencyClass = 'border-slate-200 dark:border-slate-800';
+        let countdownBadge = '';
+
+        if (diffDays < 0) {
+          urgencyClass = 'border-slate-300 dark:border-slate-800 opacity-60';
+          countdownBadge = '<span class="text-xs font-mono font-bold text-slate-400">Sona Erdi</span>';
+        } else if (diffDays === 0) {
+          urgencyClass = 'border-rose-500 dark:border-rose-600 ring-2 ring-rose-500/20';
+          countdownBadge = '<span class="text-xs font-mono font-black text-rose-600 animate-pulse">BUGÜN!</span>';
+        } else if (diffDays <= 7) {
+          urgencyClass = 'border-rose-400 dark:border-rose-700 ring-1 ring-rose-500/20';
+          countdownBadge = `<span class="text-xs font-mono font-black text-rose-600">${diffDays} Gün Kaldı</span>`;
+        } else if (diffDays <= 20) {
+          urgencyClass = 'border-amber-300 dark:border-amber-700';
+          countdownBadge = `<span class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">${diffDays} Gün Kaldı</span>`;
+        } else {
+          countdownBadge = `<span class="text-xs font-mono font-semibold text-slate-500">${diffDays} Gün Kaldı</span>`;
+        }
+
+        return `
+          <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm flex flex-col justify-between transition hover:shadow-md ${urgencyClass}">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  ${d.type} • Ağırlık: ${d.weight}
+                </span>
+                ${countdownBadge}
+              </div>
+              <h4 class="font-extrabold text-sm text-slate-900 dark:text-white mt-1">${d.title}</h4>
+              <div class="text-[11px] font-mono text-slate-500 mt-0.5">
+                <i class="fa-regular fa-calendar mr-1"></i>${d.date}
+              </div>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">${d.desc || '-'}</p>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[11px]">
+              <span class="font-bold text-slate-500">${d.course}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="editDeadline('${d.id}')" title="Düzenle" class="text-slate-400 hover:text-blue-500">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteDeadline('${d.id}')" title="Sil" class="text-slate-400 hover:text-rose-500">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button onclick="startTimerForCourse('${d.course}')" class="text-blue-600 dark:text-blue-400 hover:underline font-bold ml-1">
+                  Hazırlan →
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openDeadlineModal(editId = null) {
+      const modal = document.getElementById('deadlineModal');
+      const title = document.getElementById('deadlineModalTitle');
+      document.getElementById('deadlineEditId').value = editId || '';
+
+      if (editId) {
+        const item = appState.milestones.find(m => m.id === editId);
+        if (item) {
+          title.innerHTML = '<i class="fa-solid fa-pen text-rose-600"></i> Teslimi / Sınavı Düzenle';
+          document.getElementById('deadlineTitle').value = item.title;
+          document.getElementById('deadlineCourse').value = item.course;
+          document.getElementById('deadlineType').value = item.type;
+          document.getElementById('deadlineDate').value = item.date;
+          document.getElementById('deadlineWeight').value = item.weight;
+          document.getElementById('deadlinePriority').value = item.priority || 'high';
+          document.getElementById('deadlineDesc').value = item.desc || '';
+        }
+      } else {
+        title.innerHTML = '<i class="fa-solid fa-flag-checkered text-rose-600"></i> Yeni Sınav / Teslim Ekle';
+        document.getElementById('deadlineTitle').value = '';
+        document.getElementById('deadlineDate').value = '2026-11-15';
+        document.getElementById('deadlineWeight').value = '%20';
+        document.getElementById('deadlinePriority').value = 'high';
+        document.getElementById('deadlineDesc').value = '';
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeadlineModal() {
+      const modal = document.getElementById('deadlineModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleDeadlineSubmit(e) {
+      e.preventDefault();
+      const editId = document.getElementById('deadlineEditId').value;
+      const title = document.getElementById('deadlineTitle').value.trim();
+      const course = document.getElementById('deadlineCourse').value;
+      const type = document.getElementById('deadlineType').value;
+      const date = document.getElementById('deadlineDate').value;
+      const weight = document.getElementById('deadlineWeight').value.trim();
+      const priority = document.getElementById('deadlinePriority').value;
+      const desc = document.getElementById('deadlineDesc').value.trim();
+
+      if (editId) {
+        const idx = appState.milestones.findIndex(m => m.id === editId);
+        if (idx !== -1) {
+          appState.milestones[idx] = { ...appState.milestones[idx], title, course, type, date, weight, priority, desc };
+          showToast('Teslim/sınav güncellendi');
+        }
+      } else {
+        appState.milestones.push({
+          id: 'd_' + Date.now(),
+          title,
+          course,
+          type,
+          date,
+          weight,
+          priority,
+          desc
+        });
+        showToast('Yeni sınav/teslim takvime eklendi');
+      }
+
+      saveState();
+      renderDeadlines();
+      updateDashboardStats();
+      closeDeadlineModal();
+    }
+
+    function editDeadline(id) {
+      openDeadlineModal(id);
+    }
+
+    function deleteDeadline(id) {
+      appState.milestones = appState.milestones.filter(m => m.id !== id);
+      saveState();
+      renderDeadlines();
+      updateDashboardStats();
+      showToast('Teslim takvimden silindi');
+    }
+
+    /* ============================================================
+       9. GRADE & GPA SIMULATOR MODULE
+       ============================================================ */
+
+    function renderGradeCalculator() {
+      const tbody = document.getElementById('gradeTableBody');
+      tbody.innerHTML = '';
+
+      appState.grades.forEach((g, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition';
+
+        tr.innerHTML = `
+          <td class="p-3.5">
+            <div class="font-bold text-slate-900 dark:text-white">${g.code}</div>
+            <div class="text-[10px] text-slate-500">${g.name}</div>
+          </td>
+          <td class="p-3.5 text-center font-mono font-bold">${g.ects}</td>
+          <td class="p-3.5 text-center">
+            <input type="number" min="0" max="100" value="${g.midterm}" onchange="updateGradeRow(${idx}, 'midterm', this.value)" class="w-16 text-center p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs">
+          </td>
+          <td class="p-3.5 text-center">
+            <input type="number" min="0" max="100" value="${g.coursework}" onchange="updateGradeRow(${idx}, 'coursework', this.value)" class="w-16 text-center p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs">
+          </td>
+          <td class="p-3.5 text-center">
+            <input type="number" min="0" max="100" value="${g.finalTarget}" onchange="updateGradeRow(${idx}, 'finalTarget', this.value)" class="w-16 text-center p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs font-bold text-blue-600">
+          </td>
+          <td class="p-3.5 text-center">
+            <span class="px-2.5 py-1 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold font-mono text-xs">${g.grade}</span>
+          </td>
+          <td class="p-3.5 text-center font-mono font-bold text-slate-700 dark:text-slate-300">${Number(g.point).toFixed(1)}</td>
+          <td class="p-3.5 text-right">
+            <button onclick="deleteGradeCourse(${idx})" title="Dersi Çıkar" class="text-slate-300 hover:text-rose-500 transition p-1">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      calculateOverallGPA();
+    }
+
+    function updateGradeRow(index, field, value) {
+      appState.grades[index][field] = Number(value);
+
+      // Weighted calculation: 35% Midterm + 25% Coursework/Quiz + 40% Final
+      const avg = (appState.grades[index].midterm * 0.35) + 
+                  (appState.grades[index].coursework * 0.25) + 
+                  (appState.grades[index].finalTarget * 0.40);
+
+      let grade = 'FF';
+      let point = 0.0;
+
+      if (avg >= 90) { grade = 'AA'; point = 4.0; }
+      else if (avg >= 85) { grade = 'BA'; point = 3.5; }
+      else if (avg >= 80) { grade = 'BB'; point = 3.0; }
+      else if (avg >= 75) { grade = 'CB'; point = 2.5; }
+      else if (avg >= 70) { grade = 'CC'; point = 2.0; }
+      else if (avg >= 60) { grade = 'DC'; point = 1.5; }
+      else if (avg >= 50) { grade = 'DD'; point = 1.0; }
+
+      appState.grades[index].grade = grade;
+      appState.grades[index].point = point;
+
+      saveState();
+      renderGradeCalculator();
+    }
+
+    function calculateOverallGPA() {
+      let totalPoints = 0;
+      let totalECTS = 0;
+
+      appState.grades.forEach(g => {
+        totalPoints += g.point * g.ects;
+        totalECTS += g.ects;
+      });
+
+      const gpa = totalECTS > 0 ? (totalPoints / totalECTS).toFixed(2) : '0.00';
+      document.getElementById('calculatedGPADisplay').textContent = gpa;
+      document.getElementById('statGPA').textContent = gpa;
+      document.getElementById('statTotalECTS').textContent = `${totalECTS} AKTS Yükü`;
+    }
+
+    function openAddGradeCourseModal() {
+      const modal = document.getElementById('gradeCourseModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAddGradeCourseModal() {
+      const modal = document.getElementById('gradeCourseModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleAddGradeCourseSubmit(e) {
+      e.preventDefault();
+      const code = document.getElementById('gradeNewCode').value.trim();
+      const name = document.getElementById('gradeNewName').value.trim();
+      const ects = parseInt(document.getElementById('gradeNewEcts').value, 10) || 3;
+      const finalTarget = parseInt(document.getElementById('gradeNewFinalTarget').value, 10) || 80;
+
+      appState.grades.push({
+        code,
+        name,
+        ects,
+        midterm: 80,
+        coursework: 80,
+        finalTarget,
+        grade: 'BA',
+        point: 3.5
+      });
+
+      saveState();
+      renderGradeCalculator();
+      closeAddGradeCourseModal();
+      showToast(`"${code}" not simülatörüne eklendi`);
+    }
+
+    function deleteGradeCourse(idx) {
+      const item = appState.grades[idx];
+      if (confirm(`"${item.code}" dersini simülatörden çıkarmak istediğinize emin misiniz?`)) {
+        appState.grades.splice(idx, 1);
+        saveState();
+        renderGradeCalculator();
+        showToast('Ders simülatörden çıkarıldı');
+      }
+    }
+
+    function resetGradesToDefault() {
+      if (confirm('Not simülatörünü başlangıç değerlerine sıfırlamak istediğinize emin misiniz?')) {
+        appState.grades = JSON.parse(JSON.stringify(SEED_GRADES));
+        saveState();
+        renderGradeCalculator();
+        showToast('Varsayılan notlar yüklendi');
+      }
+    }
+
+    /* ============================================================
+       10. ANALYTICS CHART & DASHBOARD STATS
+       ============================================================ */
+
+    function initChart() {
+      const canvas = document.getElementById('studyDistributionChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const isDark = document.documentElement.classList.contains('dark');
+
+      const dataByCourse = calculateStudyTotals();
+
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(dataByCourse),
+          datasets: [{
+            data: Object.values(dataByCourse),
+            backgroundColor: [
+              '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', 
+              '#ec4899', '#06b6d4', '#64748b', '#ef4444', '#14b8a6'
+            ],
+            borderWidth: 2,
+            borderColor: isDark ? '#0f172a' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 10,
+                font: { size: 10, family: 'Plus Jakarta Sans' },
+                color: isDark ? '#cbd5e1' : '#475569'
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    function updateChart() {
+      if (!chartInstance) return;
+      const dataByCourse = calculateStudyTotals();
+      chartInstance.data.labels = Object.keys(dataByCourse);
+      chartInstance.data.datasets[0].data = Object.values(dataByCourse);
+      chartInstance.update();
+    }
+
+    function calculateStudyTotals() {
+      const totals = {};
+      appState.studyLogs.forEach(l => {
+        const mins = Number(l.actualMinutes || l.duration || 0);
+        totals[l.course] = (totals[l.course] || 0) + mins;
+      });
+      if (Object.keys(totals).length === 0) {
+        totals['Henüz Kayıt Yok'] = 1;
+      }
+      return totals;
+    }
+
+    function updateDashboardStats() {
+      // 1. Total Study Minutes & Hours
+      const totalMinutes = appState.studyLogs.reduce((acc, curr) => acc + Number(curr.actualMinutes || curr.duration || 0), 0);
+      const hours = (totalMinutes / 60).toFixed(1);
+      document.getElementById('statTotalMinutes').textContent = `${hours} saat (${totalMinutes} dk)`;
+      document.getElementById('statLogCount').textContent = `${appState.studyLogs.length} kayıtlı oturum`;
+
+      // 2. Top Studied Course
+      const totals = calculateStudyTotals();
+      let topCourse = '-';
+      let maxVal = 0;
+      for (const [crs, val] of Object.entries(totals)) {
+        if (crs !== 'Henüz Kayıt Yok' && val > maxVal) {
+          maxVal = val;
+          topCourse = crs;
+        }
+      }
+      document.getElementById('topStudiedCourse').textContent = topCourse !== '-' ? `${topCourse} (${maxVal} dk)` : '-';
+
+      // 3. Nearest Deadline
+      const now = new Date('2026-10-11T00:00:00');
+      let nearest = null;
+      let minDiff = Infinity;
+
+      appState.milestones.forEach(d => {
+        const diff = new Date(d.date + 'T23:59:59') - now;
+        if (diff > 0 && diff < minDiff) {
+          minDiff = diff;
+          nearest = d;
+        }
+      });
+
+      if (nearest) {
+        const days = Math.ceil(minDiff / (1000 * 60 * 60 * 24));
+        document.getElementById('statNextDeadline').textContent = nearest.title;
+        document.getElementById('statDaysLeft').textContent = `${days} gün kaldı (${nearest.date})`;
+      }
+    }
+
+    function getCourseBadgeColor(course) {
+      if (!course) return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+      if (course.includes('MATH 240')) return 'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300';
+      if (course.includes('CMPE 325')) return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/80 dark:text-cyan-300';
+      if (course.includes('CMPE 421')) return 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300';
+      if (course.includes('CMPE 414')) return 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300';
+      if (course.includes('CMPE 472')) return 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300';
+      if (course.includes('SENG 491')) return 'bg-lime-100 text-lime-800 dark:bg-lime-950/80 dark:text-lime-300';
+      if (course.includes('SENG 499')) return 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
+      if (course.includes('HIST 102')) return 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300';
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
+    }
+
+    /* ============================================================
+       11. JSON IMPORT / EXPORT & CLOUD SYNC ENGINE
+       ============================================================ */
+
+    function openSyncModal() {
+      const modal = document.getElementById('syncModal');
+      if (appState.syncConfig) {
+        document.getElementById('syncGithubToken').value = appState.syncConfig.githubToken || '';
+        document.getElementById('syncGistId').value = appState.syncConfig.gistId || '';
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSyncModal() {
+      const modal = document.getElementById('syncModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Export Data to Timestamped JSON
+    function exportDataJSON() {
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+      const filename = `academic_tracker_backup_${dateStr}_${timeStr}.json`;
+
+      const payload = {
+        version: '2.0.0',
+        exportedAt: now.toISOString(),
+        institution: 'TED University',
+        semester: 'Fall 2026',
+        data: appState
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast(`Yedek indirildi: ${filename}`);
+    }
+
+    // Import Data from JSON (with Schema Validation & Merge / Replace)
+    function handleJSONImport(mode = 'replace') {
+      const fileInput = document.getElementById('importFileInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Lütfen içe aktarılacak bir JSON dosyası seçin.');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          const content = JSON.parse(e.target.result);
+          
+          // Schema validation
+          const importedData = content.data || content;
+          if (!importedData.courses && !importedData.studyTasks && !importedData.milestones) {
+            throw new Error('Geçersiz dosya yapısı: Beklenen veri koleksiyonları bulunamadı.');
+          }
+
+          if (mode === 'replace') {
+            appState.courses = importedData.courses || appState.courses;
+            appState.studyTasks = importedData.studyTasks || appState.studyTasks;
+            appState.studyLogs = importedData.studyLogs || appState.studyLogs;
+            appState.milestones = importedData.milestones || appState.milestones;
+            appState.grades = importedData.grades || appState.grades;
+            showToast('Veriler başarıyla içe aktarıldı (üzerine yazıldı)');
+          } else {
+            // Merge mode (deduplicate by id)
+            const mergeArr = (current, incoming) => {
+              if (!incoming) return current;
+              const map = new Map(current.map(item => [item.id || item.code, item]));
+              incoming.forEach(item => map.set(item.id || item.code, item));
+              return Array.from(map.values());
+            };
+
+            appState.courses = mergeArr(appState.courses, importedData.courses);
+            appState.studyTasks = mergeArr(appState.studyTasks, importedData.studyTasks);
+            appState.studyLogs = mergeArr(appState.studyLogs, importedData.studyLogs);
+            appState.milestones = mergeArr(appState.milestones, importedData.milestones);
+            appState.grades = mergeArr(appState.grades, importedData.grades);
+            showToast('Veriler başarıyla mevcut kayıtlarla birleştirildi');
+          }
+
+          saveState();
+          populateCourseSelectOptions();
+          renderTimetable();
+          renderTodayClasses();
+          renderStudyTasks();
+          renderStudyLogs();
+          renderDeadlines();
+          renderGradeCalculator();
+          updateDashboardStats();
+          updateChart();
+          closeSyncModal();
+        } catch (err) {
+          alert('JSON içe aktarma hatası: ' + err.message);
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    // Cloud Sync (GitHub Gist Integration)
+    async function pushToCloudGist() {
+      const token = document.getElementById('syncGithubToken').value.trim();
+      const gistId = document.getElementById('syncGistId').value.trim();
+
+      if (!token) {
+        alert('Lütfen GitHub Personal Access Token giriniz.');
+        return;
+      }
+
+      appState.syncConfig = { githubToken: token, gistId };
+      saveState();
+
+      try {
+        const payload = {
+          description: 'TEDÜ Akademik Takvim & Çalışma Takip Yedek',
+          public: false,
+          files: {
+            'academic_tracker_backup.json': {
+              content: JSON.stringify(appState, null, 2)
+            }
+          }
+        };
+
+        const endpoint = gistId 
+          ? `https://api.github.com/gists/${gistId}` 
+          : 'https://api.github.com/gists';
+        const method = gistId ? 'PATCH' : 'POST';
+
+        const res = await fetch(endpoint, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || 'GitHub API isteği başarısız oldu.');
+        }
+
+        const resData = await res.json();
+        document.getElementById('syncGistId').value = resData.id;
+        appState.syncConfig.gistId = resData.id;
+        saveState();
+
+        showToast(`☁️ Buluta senkronize edildi! Gist ID: ${resData.id.slice(0, 8)}...`);
+      } catch (err) {
+        alert('Buluta gönderme hatası: ' + err.message);
+      }
+    }
+
+    async function pullFromCloudGist() {
+      const token = document.getElementById('syncGithubToken').value.trim();
+      const gistId = document.getElementById('syncGistId').value.trim();
+
+      if (!gistId) {
+        alert('Lütfen verilerin çekileceği Gist ID giriniz.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (!res.ok) throw new Error('Gist bulunamadı veya erişilemedi.');
+
+        const data = await res.json();
+        const file = data.files['academic_tracker_backup.json'];
+        if (!file || !file.content) throw new Error('Gist içinde academic_tracker_backup.json dosyası bulunamadı.');
+
+        const parsed = JSON.parse(file.content);
+        appState.courses = parsed.courses || appState.courses;
+        appState.studyTasks = parsed.studyTasks || appState.studyTasks;
+        appState.studyLogs = parsed.studyLogs || appState.studyLogs;
+        appState.milestones = parsed.milestones || appState.milestones;
+        appState.grades = parsed.grades || appState.grades;
+
+        saveState();
+        populateCourseSelectOptions();
+        renderTimetable();
+        renderTodayClasses();
+        renderStudyTasks();
+        renderStudyLogs();
+        renderDeadlines();
+        renderGradeCalculator();
+        updateDashboardStats();
+        updateChart();
+        closeSyncModal();
+        showToast('☁️ Buluttan başarıyla çekildi ve güncellendi!');
+      } catch (err) {
+        alert('Buluttan çekme hatası: ' + err.message);
+      }
+    }
+
+    function confirmResetDemoData() {
+      if (confirm('Tüm özel dersleri ve kayıtları silip fabrika ayarlarına (TEDÜ Güz 2026 Başlangıç Programı) dönmek istediğinize emin misiniz?')) {
+        resetStateToSeeds();
+        populateCourseSelectOptions();
+        renderTimetable();
+        renderTodayClasses();
+        renderStudyTasks();
+        renderStudyLogs();
+        renderDeadlines();
+        renderGradeCalculator();
+        updateDashboardStats();
+        updateChart();
+        closeSyncModal();
+        showToast('Varsayılan TEDÜ 2026 verileri yüklendi');
+      }
+    }
+
+    /* ============================================================
+       12. TOAST NOTIFICATION UTILITY
+       ============================================================ */
+
+    function showToast(msg) {
+      const existing = document.getElementById('appToast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'appToast';
+      toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2 transition-all transform duration-300';
+      toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${msg}</span>`;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (toast) {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
